@@ -1,32 +1,36 @@
-name: Build Android
+name: Build Android APK
 
 on:
   push:
     branches: [ main ]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install build tools
+      - name: Grant execute permission
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build
+          cd android
+          ./gradlew assembleDebug
 
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pvz-portable-mod-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
